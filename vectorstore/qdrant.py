@@ -1,0 +1,56 @@
+from qdrant_client import QdrantClient
+from qdrant_client.models import VectorParams, Distance
+import logging 
+
+from core.settings_loader import load_settings
+
+settings = load_settings()
+logger = logging.getLogger("vector_database")
+
+QDRANT_CONFIG = settings["vector_database"]
+COLLECTION_NAME = QDRANT_CONFIG["collection_name"] # khong dung .get vi day la bat buoc phai co
+VECTOR_SIZE = QDRANT_CONFIG["vector_size"] # khong dung .get vi day la bat buoc phai co
+DISTANCE = QDRANT_CONFIG.get("distance", "cosine") # mac dinh la cosine, co the la "dot" hoac "euclid"
+
+_client: QdrantClient | None = None
+
+def get_qdrant_client() -> QdrantClient: # them -> QdrantClient de tra ve
+    global _client
+    if _client is not None:
+        return _client
+    
+    # Neu ket noi qua URL
+    if QDRANT_CONFIG.get("url"):
+        logger.info("Connect via URL")
+        _client = QdrantClient(
+            url=QDRANT_CONFIG["url"],
+            api_key=QDRANT_CONFIG.get("api_key")
+        )
+    else:
+        logger.info(f"Connect via: {QDRANT_CONFIG.get('host')}: {QDRANT_CONFIG.get('port')}")
+        
+        _client = QdrantClient(
+            host=QDRANT_CONFIG.get("host"),
+            port=QDRANT_CONFIG.get("port"),
+            api_key=QDRANT_CONFIG.get("api_key")
+        )
+    
+    return _client
+
+def ensure_collection(client: QdrantClient): # truyen vao client de tao collection
+    existing_collection = [collection.name for collection in client.get_collections().collections]
+    
+    if COLLECTION_NAME in existing_collection:
+        logger.info(f"Collection '{COLLECTION_NAME}' already exists.")
+        return
+    
+    logger.info(f"Creating collection '{COLLECTION_NAME}'...")
+    client.recreate_collection(
+        collection_name=COLLECTION_NAME,
+        vectors_config=VectorParams(
+            size=VECTOR_SIZE,
+            distance=Distance[DISTANCE.upper()]
+        )
+    )
+    logger.info(f"Collection '{COLLECTION_NAME}' created with vector size {VECTOR_SIZE} and distance '{DISTANCE}'.")
+    
