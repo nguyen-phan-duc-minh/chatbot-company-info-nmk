@@ -1,6 +1,7 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance
 import logging 
+import os
 
 from core.settings_loader import load_settings
 
@@ -11,6 +12,7 @@ QDRANT_CONFIG = settings["vector_database"]
 COLLECTION_NAME = QDRANT_CONFIG["collection_name"] # khong dung .get vi day la bat buoc phai co
 VECTOR_SIZE = QDRANT_CONFIG["vector_size"] # khong dung .get vi day la bat buoc phai co
 DISTANCE = QDRANT_CONFIG.get("distance", "cosine") # mac dinh la cosine, co the la "dot" hoac "euclid"
+TIMEOUT = QDRANT_CONFIG.get("timeout", 30) # Default 30 seconds
 
 _client: QdrantClient | None = None
 
@@ -19,23 +21,33 @@ def get_qdrant_client() -> QdrantClient: # them -> QdrantClient de tra ve
     if _client is not None:
         return _client
     
-    # Neu ket noi qua URL
-    if QDRANT_CONFIG.get("url"):
-        logger.info("Connect via URL")
-        _client = QdrantClient(
-            url=QDRANT_CONFIG["url"],
-            api_key=QDRANT_CONFIG.get("api_key")
-        )
-    else:
-        logger.info(f"Connect via: {QDRANT_CONFIG.get('host')}: {QDRANT_CONFIG.get('port')}")
+    try:
+        # Neu ket noi qua URL
+        if QDRANT_CONFIG.get("url"):
+            logger.info("Connect via URL")
+            _client = QdrantClient(
+                url=QDRANT_CONFIG["url"],
+                api_key=QDRANT_CONFIG.get("api_key"),
+                timeout=TIMEOUT
+            )
+        else:
+            logger.info(f"Connect via: {QDRANT_CONFIG.get('host')}: {QDRANT_CONFIG.get('port')}")
+            
+            _client = QdrantClient(
+                host=QDRANT_CONFIG.get("host"),
+                port=QDRANT_CONFIG.get("port"),
+                api_key=QDRANT_CONFIG.get("api_key"),
+                timeout=TIMEOUT
+            )
         
-        _client = QdrantClient(
-            host=QDRANT_CONFIG.get("host"),
-            port=QDRANT_CONFIG.get("port"),
-            api_key=QDRANT_CONFIG.get("api_key")
-        )
+        # Test connection
+        _client.get_collections()
+        logger.info("Successfully connected to Qdrant")
+        return _client
     
-    return _client
+    except Exception as e:
+        logger.error(f"Failed to connect to Qdrant: {e}")
+        raise ConnectionError(f"Cannot connect to Qdrant database: {e}")
 
 def ensure_collection(client: QdrantClient): # truyen vao client de tao collection
     existing_collection = [collection.name for collection in client.get_collections().collections]

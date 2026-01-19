@@ -2,6 +2,7 @@ import logging
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import ScoredPoint
+from qdrant_client.http.exceptions import ResponseHandlingException
 
 from core.settings_loader import load_settings
 from core.schema import RetrievedDocument
@@ -21,36 +22,44 @@ def retrieve(query: str) -> list[RetrievedDocument]:
         logger.warning("Received empty query for retrieval.")
         return []
     
-    client: QdrantClient = get_qdrant_client() 
-    vectors = embed_texts([query]) # embedding query, dung [query] de tra ve list vi embed nhan list
-    if not vectors:
-        logger.error("Failed to generate embedding for the query.")
-        return []
-    
-    query_vector = vectors[0] # dung [0] vi chi co 1 query
-    
-    response = client.query_points( # truy van points tu qdrant
-        collection_name=COLLECTION_NAME,
-        query=query_vector,
-        limit=RETRIEVAL_TOP_K,
-        with_payload=True, # lay ca payload noi chua text va metadata
-        score_threshold=RETRIEVAL_SCORE_THRESHOLD,
-    )
-    
-    points: list[ScoredPoint] = response.points # chu thich response.points la list cac ScoredPoint
-    documents: list[RetrievedDocument] = [] # chuan hoa ket qua tra ve theo schema RetrievedDocument. Thay vi document = []
-    
-    for point in points:
-        payload = point.payload or {} # neu payload la None thi gan payload la dict rong
-
-        documents.append(
-            RetrievedDocument(
-                id=str(point.id),
-                score=point.score,
-                text=payload.get("text", ""),
-                metadata={key: value for key, value in payload.items() if key != "text"},
-            )
+    try:
+        client: QdrantClient = get_qdrant_client() 
+        vectors = embed_texts([query]) # embedding query, dung [query] de tra ve list vi embed nhan list
+        if not vectors:
+            logger.error("Failed to generate embedding for the query.")
+            return []
+        
+        query_vector = vectors[0] # dung [0] vi chi co 1 query
+        
+        response = client.query_points( # truy van points tu qdrant
+            collection_name=COLLECTION_NAME,
+            query=query_vector,
+            limit=RETRIEVAL_TOP_K,
+            with_payload=True, # lay ca payload noi chua text va metadata
+            score_threshold=RETRIEVAL_SCORE_THRESHOLD,
         )
         
-    logger.info(f"Retrieved {len(documents)} documents")
-    return documents
+        points: list[ScoredPoint] = response.points # chu thich response.points la list cac ScoredPoint
+        documents: list[RetrievedDocument] = [] # chuan hoa ket qua tra ve theo schema RetrievedDocument. Thay vi document = []
+        
+        for point in points:
+            payload = point.payload or {} # neu payload la None thi gan payload la dict rong
+
+            documents.append(
+                RetrievedDocument(
+                    id=str(point.id),
+                    score=point.score,
+                    text=payload.get("text", ""),
+                    metadata={key: value for key, value in payload.items() if key != "text"},
+                )
+            )
+            
+        logger.info(f"Retrieved {len(documents)} documents")
+        return documents
+    
+    except ResponseHandlingException as e:
+        logger.error(f"Qdrant connection error: {e}")
+        raise ConnectionError("Cannot connect to vector database")
+    except Exception as e:
+        logger.error(f"Error during retrieval: {e}", exc_info=True)
+        return []

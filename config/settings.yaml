@@ -30,14 +30,17 @@ vector_database:
   api_key: null               # nếu dùng Qdrant Cloud
   collection_name: nmk_chatbot_collection
   distance: cosine            # cosine | dot | euclid
-  vector_size: 384 
+  vector_size: 384
+  timeout: 30                 # connection timeout in seconds
 
 # Cau hinh model LLM
 llm:
   provider: ollama
   model_name: qwen2.5:3b
+  base_url: http://localhost:11434
   temperature: 0.2
   max_tokens: 1024
+  timeout: 60                 # request timeout in seconds
 
 # Cau hinh RAG
 retrieval:
