@@ -58,6 +58,7 @@ def chunk_hero_slides():
         
         slide_id = slide.get("id")
         slide_subtitle = slide.get("subtitle")
+        slide_image_url = slide.get("imageUrl", "")
         
         text_parts = [
             f"Hero Slide Title: {slide_title}",
@@ -66,14 +67,22 @@ def chunk_hero_slides():
         
         if slide_subtitle and isinstance(slide_subtitle, str):
             text_parts.append(f"Hero Slide Subtitle: {slide_subtitle}")
+        
+        if slide_image_url:
+            text_parts.append("Có hình ảnh banner.")
             
-        text = "\n".join(text_parts)
+        text = " ".join(text_parts)
         
         chunks.append({
             "text": text,
             "metadata": {
                 "type": "hero_slide",
                 "id": slide_id,
+                "slide_id": slide_id,
+                "slide_title": slide_title,
+                "slide_subtitle": slide_subtitle,
+                "slide_description": slide_description,
+                "slide_image_url": slide_image_url,
                 "title": slide_title,
                 "source": "heroSlides.json"
             }

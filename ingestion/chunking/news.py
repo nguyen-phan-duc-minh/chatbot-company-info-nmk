@@ -73,11 +73,17 @@ def chunk_news():
         if not isinstance(news_item_view_count, int):
             news_item_view_count = 0
         
+        news_item_thumbnail_url = news_item.get("thumbnailUrl", "")
+        news_item_slug = news_item.get("slug", "")
+        
         text_parts = [
             f'Tựa đề tin tức: {news_item_title}',
             f'Tóm tắt tin tức: {news_item_excerpt}',
             f'Nội dung tin tức: {news_item_content}'
         ]
+        
+        if news_item_thumbnail_url:
+            text_parts.append('Có hình ảnh minh họa.')
         
         if news_item_author and isinstance(news_item_author, str):
             text_parts.append(f'Tác giả tin tức: {news_item_author}')
@@ -89,12 +95,18 @@ def chunk_news():
             "metadata": {
                 "type": "news_article",
                 "news_article_id": news_item_id,
+                "news_slug": news_item_slug,
+                "news_title": news_item_title,
+                "news_excerpt": news_item_excerpt,
+                "news_author": news_item_author,
+                "news_thumbnail_url": news_item_thumbnail_url,
+                "news_image_url": news_item_thumbnail_url,
                 "published_at": news_published_at,
                 "view_count": news_item_view_count,
                 "source": "news.json",
             }
         })
-        
+
     if not chunks:
         logger.warning("No valid news items were processed")
         

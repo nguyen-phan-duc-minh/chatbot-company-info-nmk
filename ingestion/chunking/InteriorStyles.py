@@ -47,11 +47,25 @@ def chunk_interior_styles():
         interior_id = interior_style.get("id")
         interior_slug = interior_style.get("slug", "")
         interior_name = interior_style.get("name", "")
+        interior_description = interior_style.get("description", "")
+        interior_image_url = interior_style.get("imageUrl", "")
+        
         if not interior_name or not isinstance(interior_name, str):
             logger.warning(f"Interior style at index {idx} due to missing or invalid name")
             continue
         
-        text = f'Tên phong cách nội thất: {interior_name}.'
+        # Build rich text content
+        text_parts = [f'Phong cách nội thất: {interior_name}']
+        
+        if interior_description and interior_description.strip():
+            text_parts.append(f'Mô tả: {interior_description}')
+        else:
+            text_parts.append(f'Đây là một trong những phong cách nội thất phổ biến của NMK Architecture.')
+        
+        if interior_image_url:
+            text_parts.append(f'Hình ảnh tham khảo có sẵn.')
+        
+        text = ' '.join(text_parts)
         
         chunks.append({
             "text": text,
@@ -60,6 +74,8 @@ def chunk_interior_styles():
                 "interior_style_id": interior_id,
                 "interior_style_slug": interior_slug,
                 "interior_style_name": interior_name,
+                "interior_style_description": interior_description or "",
+                "interior_style_image_url": interior_image_url,
                 "source": "interiorStyles.json"
             }
         })

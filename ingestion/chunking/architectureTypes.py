@@ -47,22 +47,38 @@ def chunk_architecture_types():
             logger.warning(f"Invalid architecture type at index {idx}: expected a dictionary")
             continue
         
-        architecture_id = architecture_type.get("id") # lay id loai kien truc
-        architecture_slug = architecture_type.get("slug", "") # lay slug loai kien truc
-        architecture_name = architecture_type.get("name", "") # lay ten loai kien truc
-        if not architecture_name or not isinstance(architecture_name, str): # kiem tra ten loai kien truc co hop le khong. Vi du: "Modern"
+        architecture_id = architecture_type.get("id")
+        architecture_slug = architecture_type.get("slug", "")
+        architecture_name = architecture_type.get("name", "")
+        architecture_description = architecture_type.get("description", "")
+        architecture_image_url = architecture_type.get("imageUrl", "")
+        
+        if not architecture_name or not isinstance(architecture_name, str):
             logger.warning(f"Architecture type at index {idx} due to missing or invalid name")
             continue
-            
-        text = f'Tên loại kiến trúc: {architecture_name}.' # tao doan van ban voi ten loai kien truc
         
-        chunks.append ({ 
+        # Build rich text content
+        text_parts = [f'Loại kiến trúc: {architecture_name}']
+        
+        if architecture_description and architecture_description.strip():
+            text_parts.append(f'Mô tả: {architecture_description}')
+        else:
+            text_parts.append(f'Đây là một trong những loại kiến trúc của NMK Architecture.')
+        
+        if architecture_image_url:
+            text_parts.append(f'Hình ảnh tham khảo có sẵn.')
+        
+        text = ' '.join(text_parts)
+        
+        chunks.append({
             "text": text,
             "metadata": {
                 "type": "architecture_type",
                 "architecture_type_id": architecture_id,
                 "architecture_type_slug": architecture_slug,
                 "architecture_type_name": architecture_name,
+                "architecture_type_description": architecture_description or "",
+                "architecture_type_image_url": architecture_image_url,
                 "source": "architectureTypes.json"
             }
         })

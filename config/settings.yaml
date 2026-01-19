@@ -39,8 +39,8 @@ llm:
   model_name: qwen2.5:3b
   base_url: http://localhost:11434
   temperature: 0.2
-  max_tokens: 1024
-  timeout: 60                 # request timeout in seconds
+  max_tokens: 512              # Giảm từ 1024 → 512 để nhanh hơn
+  timeout: 60                  # request timeout in seconds
 
 # Cau hinh RAG
 retrieval:

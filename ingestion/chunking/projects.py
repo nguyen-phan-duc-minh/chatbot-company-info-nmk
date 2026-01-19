@@ -51,6 +51,9 @@ def chunk_projects():
         project_slug = project.get("slug", "")
         project_investor = project.get("investor", "")
         project_location = project.get("location", "")
+        project_description = project.get("description", "")
+        project_thumbnail_url = project.get("thumbnailUrl", "")
+        project_completed_date = project.get("completedDate", "")
         project_area = project.get("area")
         if not isinstance(project_area, (int, float)):
             project_area = None
@@ -87,25 +90,48 @@ def chunk_projects():
         
         project_interior_slug = interior.get("slug")
         
-        text = [
-            f"Tên dự án: {project_name}",
-            f"Danh mục dự án: {project_category_name}",
-            f"Loại nội thất: {project_interior_name}",
-            
-        ]
+        # Build rich text content
+        text_parts = [f"Dự án: {project_name}"]
+        
+        if project_description and project_description.strip():
+            text_parts.append(f"Mô tả: {project_description}")
+        
+        text_parts.append(f"Danh mục: {project_category_name}")
+        text_parts.append(f"Phong cách nội thất: {project_interior_name}")
+        
+        if project_location:
+            text_parts.append(f"Địa điểm: {project_location}")
+        
+        if project_investor:
+            text_parts.append(f"Chủ đầu tư: {project_investor}")
+        
+        if project_area:
+            text_parts.append(f"Diện tích: {project_area} m²")
+        
+        if project_completed_date:
+            text_parts.append(f"Hoàn thành: {project_completed_date[:10]}")
+        
+        if project_thumbnail_url:
+            text_parts.append("Có hình ảnh tham khảo.")
+        
+        text = " ".join(text_parts)
         
         chunks.append({
-            "text": "\n".join(text),
+            "text": text,
             "metadata": {
                 "type": "project",
                 "project_id": project_id,
                 "project_slug": project_slug,
                 "project_name": project_name,
+                "project_description": project_description or "",
+                "project_thumbnail_url": project_thumbnail_url,
+                "project_image_url": project_thumbnail_url, 
                 "project_view_count": project_view_count,
                 "project_published_at": project_published_at,
                 "project_area": project_area,
                 "project_investor": project_investor,
                 "project_location": project_location,
+                "project_completed_date": project_completed_date,
                 "project_category_id": project_category_id,
                 "project_category_name": project_category_name,
                 "project_category_slug": project_category_slug,
