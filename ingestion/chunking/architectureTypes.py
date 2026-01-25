@@ -2,7 +2,10 @@ import json
 import logging
 from pathlib import Path
 
+from polars import datetime
+
 from core.settings_loader import load_settings
+from ingestion.helpers.make_metadata import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -51,38 +54,28 @@ def chunk_architecture_types():
         architecture_slug = architecture_type.get("slug", "")
         architecture_name = architecture_type.get("name", "")
         architecture_description = architecture_type.get("description", "")
-        architecture_image_url = architecture_type.get("imageUrl", "")
         
-        if not architecture_name or not isinstance(architecture_name, str):
-            logger.warning(f"Architecture type at index {idx} due to missing or invalid name")
-            continue
+        base_metadata = {
+            "type": "architecture_type",
+            "architecture_type_id": architecture_id,
+            "architecture_type_name": architecture_name,
+            "architecture_type_slug": architecture_slug,
+            "source": "architectureTypes.json",
+            "created_at": datetime.utcnow().isoformat(),
+            "language": "vi"
+        }
         
-        # Build rich text content
-        text_parts = [f'Loại kiến trúc: {architecture_name}']
-        
-        if architecture_description and architecture_description.strip():
-            text_parts.append(f'Mô tả: {architecture_description}')
-        else:
-            text_parts.append(f'Đây là một trong những loại kiến trúc của NMK Architecture.')
-        
-        if architecture_image_url:
-            text_parts.append(f'Hình ảnh tham khảo có sẵn.')
-        
-        text = ' '.join(text_parts)
-        
-        chunks.append({
-            "text": text,
-            "metadata": {
-                "type": "architecture_type",
-                "architecture_type_id": architecture_id,
-                "architecture_type_slug": architecture_slug,
-                "architecture_type_name": architecture_name,
-                "architecture_type_description": architecture_description or "",
-                "architecture_type_image_url": architecture_image_url,
-                "source": "architectureTypes.json"
-            }
-        })
-    if not chunks:
-        logger.warning("No valid architecture type chunks were created")
+        if architecture_name and architecture_description:
+            text_parts = []
+            text_parts.append(f"Tên phong cách kiến trúc: {architecture_name}.")
+            text_parts.append(f"Mô tả phong cách kiến trúc: {architecture_description}.")
+            text = "\n".join(text_parts)
+            chunks.append({
+                "text": text,
+                "metadata": make_metadata(
+                    base_metadata, 
+                    chunk_type="definition", 
+                    priority=3)
+            })
             
     return chunks

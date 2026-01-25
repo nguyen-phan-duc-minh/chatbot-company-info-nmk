@@ -1,8 +1,11 @@
 import json
 import logging
 from pathlib import Path
+from datetime import datetime
 
 from core.settings_loader import load_settings
+from ingestion.helpers.make_metadata import make_metadata
+from ingestion.helpers.split_paragraphs import split_paragraphs
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -43,106 +46,122 @@ def chunk_projects():
             continue
         
         project_id = project.get("id")
-        project_name = project.get("title", "")
-        if not project_name or not isinstance(project_name, str):
-            logger.warning(f"Project at index {idx} has invalid or missing title")
-            continue
-        
+        project_name = project.get("title", "").strip()
         project_slug = project.get("slug", "")
         project_investor = project.get("investor", "")
         project_location = project.get("location", "")
         project_description = project.get("description", "")
         project_thumbnail_url = project.get("thumbnailUrl", "")
         project_completed_date = project.get("completedDate", "")
-        project_area = project.get("area")
-        if not isinstance(project_area, (int, float)):
-            project_area = None
-        
-        project_view_count = project.get("viewCount")
-        if not isinstance(project_view_count, int):
-            project_view_count = 0
-            
-        project_published_at = project.get("publishedAt")
-        
+        project_area = project.get("area") if isinstance(project.get("area"), (int, float)) else None
         category = project.get("category", {})
-        if not isinstance(category, dict):
-            logger.warning(f"Project at index {idx} has invalid category")
-            continue
-        
-        project_category_id = category.get("id")
-        project_category_name = category.get("name", "")
-        if not project_category_name or not isinstance(project_category_name, str):
-            logger.warning(f"Project at index {idx} has invalid or missing category name")
-            continue
-        
-        project_category_slug = category.get("slug")
-        
         interior = project.get("interiorStyle", {})
-        if not isinstance(interior, dict):
-            logger.warning(f"Project at index {idx} has invalid interior")
-            continue
+       
+        base_metadata = {
+            "type": "project",
+            "project_id": project_id,
+            "project_name": project_name,
+            "project_slug": project_slug,
+            "source": "projects.json",
+            "created_at": datetime.utcnow().isoformat(),
+            "language": "vi",
+        }
         
-        project_interior_id = interior.get("id")
-        project_interior_name = interior.get("name", "")
-        if not project_interior_name or not isinstance(project_interior_name, str):
-            logger.warning(f"Project at index {idx} has invalid or missing interior name")
-            continue
+        CHUNK_PRIORITY = {
+            "overview": 1,
+            "description": 2,
+            "style": 3,
+            "context": 4,
+            "specs": 5,
+            "media": 6
+        }
         
-        project_interior_slug = interior.get("slug")
+        # 1/ Overview chunk
+        if project_name:
+            chunks.append({
+                "text": f"Dự án {project_name}.",
+                "metadata": make_metadata(base_metadata, chunk_type="overview", priority=CHUNK_PRIORITY["overview"])
+            })
         
-        # Build rich text content
-        text_parts = [f"Dự án: {project_name}"]
-        
-        if project_description and project_description.strip():
-            text_parts.append(f"Mô tả: {project_description}")
-        
-        text_parts.append(f"Danh mục: {project_category_name}")
-        text_parts.append(f"Phong cách nội thất: {project_interior_name}")
-        
-        if project_location:
-            text_parts.append(f"Địa điểm: {project_location}")
-        
-        if project_investor:
-            text_parts.append(f"Chủ đầu tư: {project_investor}")
-        
-        if project_area:
-            text_parts.append(f"Diện tích: {project_area} m²")
-        
-        if project_completed_date:
-            text_parts.append(f"Hoàn thành: {project_completed_date[:10]}")
-        
+        # 2/ Description chunk
+        for i, part in enumerate(split_paragraphs(project_description)):
+            chunks.append({
+                "text": f"Mô tả dự án {project_name}: {part}",
+                "metadata": make_metadata(
+                    base_metadata,
+                    chunk_type="description",
+                    priority=CHUNK_PRIORITY["description"],
+                    part_index=i
+                )
+            })
+
+        # 3/ Category + Interior style chunk
+        if category.get("name") or interior.get("name"):
+            text_parts = []
+            if category.get("name"):
+                text_parts.append(f"Danh mục: {category['name']}")
+            if interior.get("name"):
+                text_parts.append(f"Phong cách nội thất: {interior['name']}")
+
+            chunks.append({
+                "text": f"Dự án {project_name}. " + ". ".join(text_parts),
+                "metadata": make_metadata(
+                    base_metadata,
+                    chunk_type="style",
+                    project_category_name=category.get("name"),
+                    project_interior_name=interior.get("name"),
+                    priority=CHUNK_PRIORITY["style"]
+                )
+            })
+
+        # 4/ Location + Investor chunk
+        if project_location or project_investor:
+            text_parts = []
+            if project_location:
+                text_parts.append(f"Địa điểm: {project_location}")
+            if project_investor:
+                text_parts.append(f"Chủ đầu tư: {project_investor}")
+
+            chunks.append({
+                "text": f"Dự án {project_name}. " + ". ".join(text_parts),
+                "metadata": make_metadata(
+                    base_metadata,
+                    chunk_type="context",
+                    project_location=project_location,
+                    project_investor=project_investor,
+                    priority=CHUNK_PRIORITY["context"]
+                )
+            })
+
+        # 5/ Specs chunk (area, time)
+        if project_area or project_completed_date:
+            text_parts = []
+            if project_area:
+                text_parts.append(f"Diện tích {project_area} m²")
+            if project_completed_date:
+                text_parts.append(f"Hoàn thành năm {project_completed_date[:4]}")
+
+            chunks.append({
+                "text": f"Dự án {project_name}. " + ", ".join(text_parts),
+                "metadata": make_metadata(
+                    base_metadata,
+                    chunk_type="specs",
+                    project_area=project_area,
+                    project_completed_date=project_completed_date,
+                    priority=CHUNK_PRIORITY["specs"]
+                )
+            })
+
+        # 6/ Media chunk
         if project_thumbnail_url:
-            text_parts.append("Có hình ảnh tham khảo.")
-        
-        text = " ".join(text_parts)
-        
-        chunks.append({
-            "text": text,
-            "metadata": {
-                "type": "project",
-                "project_id": project_id,
-                "project_slug": project_slug,
-                "project_name": project_name,
-                "project_description": project_description or "",
-                "project_thumbnail_url": project_thumbnail_url,
-                "project_image_url": project_thumbnail_url, 
-                "project_view_count": project_view_count,
-                "project_published_at": project_published_at,
-                "project_area": project_area,
-                "project_investor": project_investor,
-                "project_location": project_location,
-                "project_completed_date": project_completed_date,
-                "project_category_id": project_category_id,
-                "project_category_name": project_category_name,
-                "project_category_slug": project_category_slug,
-                "project_interior_id": project_interior_id,
-                "project_interior_name": project_interior_name,
-                "project_interior_slug": project_interior_slug,
-                "source": "projects.json"
-            }
-        })
-        
-    if not chunks:
-        logger.warning("No valid project chunks were created")
-        
+            chunks.append({
+                "text": f"Dự án {project_name} có hình ảnh minh họa.",
+                "metadata": make_metadata(
+                    base_metadata,
+                    chunk_type="media",
+                    project_image_url=project_thumbnail_url,
+                    priority=CHUNK_PRIORITY["media"]
+                )
+            })
+            
     return chunks

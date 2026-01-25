@@ -39,11 +39,11 @@ def generate_answer(context: str, question: str) -> str:
                     {"role": "system", "content": prompt},
                 ],
                 options={
-                    "temperature": MODEL_TEMPERATURE,
-                    "num_predict": MODEL_MAX_TOKENS
+                    "temperature": MODEL_TEMPERATURE, # do sang tao
+                    "num_predict": MODEL_MAX_TOKENS # so luong token toi da tuc la do dai cau tra loi
                 }
             )
-            answer = response['message']['content'].strip()
+            answer = response['message']['content'].strip() # ollama co message chua content con openai co text
         else:
             logger.error(f"Unsupported model provider: {MODEL_PROVIDER}")
             return "Nhà cung cấp mô hình không được hỗ trợ."

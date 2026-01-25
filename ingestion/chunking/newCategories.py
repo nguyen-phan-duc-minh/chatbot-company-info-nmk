@@ -1,8 +1,10 @@
 import json
 import logging
 from pathlib import Path
+from datetime import datetime
 
 from core.settings_loader import load_settings
+from ingestion.helpers.make_metadata import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -46,20 +48,32 @@ def chunk_news_categories():
         news_category_name = category.get("name", "")
         news_category_slug = category.get("slug", "")
         
-        if not news_category_name or not isinstance(news_category_name, str):
+        if not news_category_name:
             logger.warning(f"News category at index {idx} has invalid or missing name")
             continue
         
-        text = f"Tên danh mục tin tức: {news_category_name}"
+        base_metadata = {
+            "type": "news_category",
+            "news_category_id": news_category_id,
+            "news_category_name": news_category_name,
+            "news_category_slug": news_category_slug, 
+            "source": "newsCategories.json",
+            "created_at": datetime.utcnow().isoformat(),
+            "language": "vi",
+        }
+        
+        text = (
+            f"Tên danh mục tin tức: {news_category_name}"
+            f"Danh mục tin tức này được sử dụng để phân loại các bài viết liên quan đến {news_category_name}."
+        )
         
         chunks.append({
             "text": text,
-            "metadata": {
-                "type": "news_category",
-                "news_category_id": news_category_id,
-                "news_category_slug": news_category_slug, 
-                "source": "newsCategories.json"
-            }
+            "metadata": make_metadata(
+                base_metadata,
+                chunk_type="definition",
+                priority=3
+            )
         })
     
     if not chunks:

@@ -5,7 +5,7 @@ from embedding.embedder import embed_texts
 
 logger = logging.getLogger("embedding")
 
-def build_qdrant_points(chunks: list[dict]) -> list[dict]:
+def build_qdrant_points(chunks: list[dict]) -> list[dict]: # list[dict] truyen vo la list cac chunk va list[dict] tra ve la list cac point
     if not chunks:
         logger.warning("No chunks provided to build Qdrant points.")
         return []

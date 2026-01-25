@@ -5,7 +5,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 import uuid
 
-from core.schema import RetrievedDocument
 from retrieval.retriever import retrieve
 from llm.generator import generate_answer
 

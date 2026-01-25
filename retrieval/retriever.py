@@ -39,6 +39,8 @@ def retrieve(query: str) -> list[RetrievedDocument]:
             score_threshold=RETRIEVAL_SCORE_THRESHOLD,
         )
         
+        # response chua cac points va trong cac points la cac ScoredPoint
+        
         points: list[ScoredPoint] = response.points # chu thich response.points la list cac ScoredPoint
         documents: list[RetrievedDocument] = [] # chuan hoa ket qua tra ve theo schema RetrievedDocument. Thay vi document = []
         

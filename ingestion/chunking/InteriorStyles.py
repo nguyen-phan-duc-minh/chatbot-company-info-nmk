@@ -1,8 +1,10 @@
 import json
 import logging
 from pathlib import Path
+from datetime import datetime
 
 from core.settings_loader import load_settings
+from ingestion.helpers.make_metadata import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -47,40 +49,29 @@ def chunk_interior_styles():
         interior_id = interior_style.get("id")
         interior_slug = interior_style.get("slug", "")
         interior_name = interior_style.get("name", "")
-        interior_description = interior_style.get("description", "")
         interior_image_url = interior_style.get("imageUrl", "")
+
+        base_metadata = {
+            "type": "interior_style",
+            "interior_id": interior_id,
+            "interior_name": interior_name,
+            "interior_slug": interior_slug,
+            "source": "interiorStyles.json",
+            "created_at": datetime.utcnow().isoformat(),
+            "language": "vi"
+        }
         
-        if not interior_name or not isinstance(interior_name, str):
-            logger.warning(f"Interior style at index {idx} due to missing or invalid name")
-            continue
-        
-        # Build rich text content
-        text_parts = [f'Phong cách nội thất: {interior_name}']
-        
-        if interior_description and interior_description.strip():
-            text_parts.append(f'Mô tả: {interior_description}')
-        else:
-            text_parts.append(f'Đây là một trong những phong cách nội thất phổ biến của NMK Architecture.')
-        
-        if interior_image_url:
-            text_parts.append(f'Hình ảnh tham khảo có sẵn.')
-        
-        text = ' '.join(text_parts)
-        
-        chunks.append({
-            "text": text,
-            "metadata": {
-                "type": "interior_style",
-                "interior_style_id": interior_id,
-                "interior_style_slug": interior_slug,
-                "interior_style_name": interior_name,
-                "interior_style_description": interior_description or "",
-                "interior_style_image_url": interior_image_url,
-                "source": "interiorStyles.json"
-            }
-        })
-        
-    if not chunks:
-        logger.warning("No valid interior style chunks were created")
-        
+        if interior_name and interior_image_url:
+            text_parts = []
+            text_parts.append(f"Tên phong cách nội thất: {interior_name}.")
+            text_parts.append(f"URL hình ảnh minh họa phong cách nội thất: {interior_image_url}.")
+            text = "\n".join(text_parts)
+            chunks.append({
+                "text": text,
+                "metadata": make_metadata(
+                    base_metadata, 
+                    chunk_type="definition", 
+                    priority=3)
+            })
+
     return chunks

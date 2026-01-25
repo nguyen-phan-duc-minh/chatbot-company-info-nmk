@@ -2,8 +2,11 @@ import json
 import logging
 from pathlib import Path
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 from core.settings_loader import load_settings
+from ingestion.helpers.make_metadata import make_metadata
+from ingestion.helpers.split_paragraphs import split_paragraphs
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -52,62 +55,44 @@ def chunk_news():
         
         news_item_id = news_item.get("id")
         news_item_title = news_item.get("title", "")
-        if not news_item_title or not isinstance(news_item_title, str):
-            logger.warning(f"News item at index {idx} has an invalid or missing title")
-            continue
-        
-        news_item_excerpt = news_item.get("excerpt", "")
-        if not news_item_excerpt or not isinstance(news_item_excerpt, str):
-            logger.warning(f"News item at index {idx} has an invalid or missing excerpt")
-            continue
-        
-        news_item_content = news_item.get("content", "")
-        if not news_item_content or not isinstance(news_item_content, str):
-            logger.warning(f"News item at index {idx} has an invalid or missing content")
-            continue
-        news_item_content = html_to_text(news_item_content)
-        
-        news_item_author = news_item.get("author", "")
-        news_published_at = news_item.get("publishedAt", "")
-        news_item_view_count = news_item.get("viewCount")
-        if not isinstance(news_item_view_count, int):
-            news_item_view_count = 0
-        
-        news_item_thumbnail_url = news_item.get("thumbnailUrl", "")
         news_item_slug = news_item.get("slug", "")
+        news_item_excerpt = news_item.get("excerpt", "")
+        news_item_content = news_item.get("content", "")
+        news_item_content = html_to_text(news_item_content)
+        news_item_content_split = split_paragraphs(news_item_content)
         
-        text_parts = [
-            f'Tựa đề tin tức: {news_item_title}',
-            f'Tóm tắt tin tức: {news_item_excerpt}',
-            f'Nội dung tin tức: {news_item_content}'
-        ]
+        base_metadata = {
+            "type": "news",
+            "news_item_id": news_item_id,
+            "news_item_title": news_item_title,
+            "news_item_slug": news_item_slug,
+            "source": "news.json",
+            "created_at": datetime.utcnow().isoformat(),
+            "language": "vi",
+        }
         
-        if news_item_thumbnail_url:
-            text_parts.append('Có hình ảnh minh họa.')
+        CHUNK_PRIORITY = {
+            "overview": 1,
+            "full_content": 2,
+        }
         
-        if news_item_author and isinstance(news_item_author, str):
-            text_parts.append(f'Tác giả tin tức: {news_item_author}')
-            
-        text = "\n".join(text_parts)
+        # Chunk overview
+        if news_item_title and news_item_excerpt:
+            chunks.append({
+                "text": f'Tựa đề tin tức: {news_item_title}\nTóm tắt tin tức: {news_item_excerpt}',
+                "metadata": make_metadata(base_metadata, chunk_type="overview", priority=CHUNK_PRIORITY["overview"])
+            })
         
-        chunks.append({
-            "text": text,
-            "metadata": {
-                "type": "news_article",
-                "news_article_id": news_item_id,
-                "news_slug": news_item_slug,
-                "news_title": news_item_title,
-                "news_excerpt": news_item_excerpt,
-                "news_author": news_item_author,
-                "news_thumbnail_url": news_item_thumbnail_url,
-                "news_image_url": news_item_thumbnail_url,
-                "published_at": news_published_at,
-                "view_count": news_item_view_count,
-                "source": "news.json",
-            }
-        })
-
-    if not chunks:
-        logger.warning("No valid news items were processed")
-        
+        # Chunk full content
+        for i, part in enumerate(news_item_content_split):
+            chunks.append({
+                "text": f"Nội dung tin tức {news_item_title}: {part}",
+                "metadata": make_metadata(
+                    base_metadata, 
+                    chunk_type="full_content", 
+                    priority=CHUNK_PRIORITY["full_content"]),
+                "part_index": i
+            })
+                
+ 
     return chunks
