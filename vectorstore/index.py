@@ -24,7 +24,7 @@ def build_qdrant_points(chunks: list[dict]) -> list[dict]: # list[dict] truyen v
     
     for chunk, vector in zip(chunks, embeddings): # zip de lay tung chunk va vector tuong ung
         points.append({
-            "id": str(uuid.uuid4()), # tao id duy nhat cho tung point
+            "id": chunk.get("metadata", {}).get("chunk_id", str(uuid.uuid4())),
             "vector": vector, # embedding vector
             "payload": {
                 "text": chunk["text"], 

@@ -46,13 +46,15 @@ class SparseEmbedder:
                             "ke": 1,
                                 ...
                         }
+                        
+        ["biệt" : 0, "thự" : 1, "nhà" : 2, "phố" : 3, "hiện" : 4, "đại" : 5, "quận" : 6, "3" : 7]
         """
         for token in set(tokens): # Dung set de tranh dem trung token trong van ban
             self.document_frequency[token] += 1 # Tang so lan xuat hien cua token trong cac van ban. VI du: token "nha" xuat hien trong 2 van ban thi document_frequency["nha"] = 2
             if token not in self.vocabulary: # Neu token chua co trong tu dien
                 self.vocabulary[token] = len(self.vocabulary) # Gan chi so moi cho token moi. Vi du: neu vocabulary dang co 5 token, thi token moi se duoc gan chi so la 5
                 
-    def fit(self, texts: list[str]): # Fit model voi danh sach van ban
+    def fit(self, texts: list[str]): # Fit model voi danh sach van ban texts chua cac text
         """
             Vi du:
                 texts = [
@@ -69,7 +71,7 @@ class SparseEmbedder:
                 tokens = ["nha", "pho", "hien", "dai"]
                 Cập nhật vocabulary và document frequency với tokens trên
         """
-        self.num_documents = len(texts) # Cap nhat tong so van ban
+        self.num_documents = len(texts) # Cap nhat tong so van ban, tuc la tong cac chunk trong texts
         for text in texts: 
             tokens = tokenize(text) # Tach van ban thanh cac token
             self.__update_vocabulary(tokens) # Cap nhat tu dien va dem tan so van ban

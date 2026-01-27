@@ -33,6 +33,11 @@ loggers:
     handlers: [console, file]
     propagate: no
 
+  scoring:
+    level: DEBUG
+    handlers: [console, file]
+    propagate: no
+
   vector_database:
     level: DEBUG
     handlers: [console, file]
