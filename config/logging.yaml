@@ -53,6 +53,11 @@ loggers:
     handlers: [console, file]
     propagate: no
   
+  reranking:
+    level: DEBUG
+    handlers: [console, file]
+    propagate: no
+
   chat:
     level: DEBUG
     handlers: [console, file]

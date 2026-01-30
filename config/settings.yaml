@@ -44,5 +44,7 @@ llm:
 
 # Cau hinh RAG
 retrieval:
-  top_k: 5 # so luong chunk lay ve de dung lam context cho LLM
-  score_threshold: 0.3 # sau khi tinh cosine similarity thi chi lay nhung chunk co diem so tren nguong nay
+  top_k: 10 # so luong chunk lay ve de dung lam context cho LLM
+  score_threshold: 0.0 # sau khi tinh cosine similarity thi chi lay nhung chunk co diem so tren nguong nay
+  dense_weight: 0.6 # trong hybrid retriever, trong so cua dense retriever
+  bm25_weight: 0.4 # trong hybrid retriever, trong so cua bm25 retriever
