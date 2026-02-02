@@ -48,5 +48,19 @@ def load_settings():
         settings["retrieval"]["top_k"] = int(os.getenv("RETRIEVAL_TOP_K"))
     if os.getenv("RETRIEVAL_SCORE_THRESHOLD"):
         settings["retrieval"]["score_threshold"] = float(os.getenv("RETRIEVAL_SCORE_THRESHOLD"))
+    if os.getenv("DENSE_WEIGHT"):
+        settings["retrieval"]["dense_weight"] = float(os.getenv("DENSE_WEIGHT"))
+    if os.getenv("BM25_WEIGHT"):
+        settings["retrieval"]["bm25_weight"] = float(os.getenv("BM25_WEIGHT"))
+    
+    # Reranking overrides
+    if "reranking" not in settings:
+        settings["reranking"] = {}
+    if os.getenv("RERANKING_MODEL"):
+        settings["reranking"]["model"] = os.getenv("RERANKING_MODEL")
+    if os.getenv("RERANKING_DEVICE"):
+        settings["reranking"]["device"] = os.getenv("RERANKING_DEVICE")
+    if os.getenv("RERANKING_TOP_K"):
+        settings["reranking"]["top_k"] = int(os.getenv("RERANKING_TOP_K"))
     
     return settings

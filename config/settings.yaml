@@ -48,3 +48,9 @@ retrieval:
   score_threshold: 0.0 # sau khi tinh cosine similarity thi chi lay nhung chunk co diem so tren nguong nay
   dense_weight: 0.6 # trong hybrid retriever, trong so cua dense retriever
   bm25_weight: 0.4 # trong hybrid retriever, trong so cua bm25 retriever
+
+# Cau hinh reranking
+reranking:
+  model: cross-encoder/ms-marco-MiniLM-L-6-v2  # CrossEncoder model for reranking
+  device: cpu  # cpu or cuda
+  top_k: 5  # Final number of documents after reranking

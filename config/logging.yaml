@@ -4,7 +4,7 @@ version: 1
 formatters:
   simple:
     format: '[%(asctime)s] %(levelname)s - %(name)s - %(message)s'
-    # trong do: asctime la thoi gian, levelname la muc do log (INFO, DEBUG, ERROR), name la ten cua logger, message la noi dung log
+    # trong do: asctime la thoi gian, levelname la muc do log (INFO, INFO, ERROR), name la ten cua logger, message la noi dung log
     datefmt: '%Y-%m-%d %H:%M:%S'
 
 # Cau hinh consle
@@ -24,42 +24,42 @@ handlers:
 # Cau hinh logger cho tung module
 loggers:
   ingestion:
-    level: DEBUG
+    level: INFO
     handlers: [console, file]
     propagate: no
 
   embedding:
-    level: DEBUG
+    level: INFO
     handlers: [console, file]
     propagate: no
 
   scoring:
-    level: DEBUG
+    level: INFO
     handlers: [console, file]
     propagate: no
 
   vector_database:
-    level: DEBUG
+    level: INFO
     handlers: [console, file]
     propagate: no
 
   llm:
-    level: DEBUG
+    level: INFO
     handlers: [console, file]
     propagate: no
 
   retrieval:
-    level: DEBUG
+    level: INFO
     handlers: [console, file]
     propagate: no
   
   reranking:
-    level: DEBUG
+    level: INFO
     handlers: [console, file]
     propagate: no
 
   chat:
-    level: DEBUG
+    level: INFO
     handlers: [console, file]
     propagate: no
 

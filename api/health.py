@@ -52,4 +52,20 @@ async def health_check():
         "status": "configured"
     }
     
+    # Add RAG components status
+    try:
+        from core.startup import get_initialization_status
+        rag_status = get_initialization_status()
+        health_status["services"]["rag_components"] = {
+            "initialized": rag_status["initialized"],
+            "sparse_embedder": "ready" if rag_status["sparse_embedder"] else "not initialized",
+            "bm25": "ready" if rag_status["bm25"] else "not initialized",
+            "reranker": "ready" if rag_status["reranker"] else "not initialized",
+            "vocabulary_size": rag_status["vocabulary_size"],
+            "avg_document_length": round(rag_status["avg_doc_length"], 2)
+        }
+    except Exception as e:
+        logger.error(f"Failed to get RAG components status: {e}")
+        health_status["services"]["rag_components"] = {"status": "error", "error": str(e)}
+    
     return health_status
