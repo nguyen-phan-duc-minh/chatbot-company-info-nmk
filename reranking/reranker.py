@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from core.schema import RetrievedDocument
 from reranking.base import BaseReranker
@@ -11,7 +10,7 @@ class CrossEncoderReranker(BaseReranker):
     def __init__(self, model: CrossEncoderModel):
         self.model = model
 
-    def rerank(self, query: str, documents: List[RetrievedDocument], top_k: int | None = None) -> List[RetrievedDocument]:
+    def rerank(self, query: str, documents: list[RetrievedDocument], top_k: int | None = None) -> list[RetrievedDocument]:
         if not documents:
             return []
 
@@ -26,10 +25,7 @@ class CrossEncoderReranker(BaseReranker):
             doc.metadata["rerank_score"] = float(score)
 
         # 4. Sort lại
-        documents.sort(
-            key=lambda d: d.metadata["rerank_score"],
-            reverse=True,
-        )
+        documents.sort(key=lambda d: d.metadata["rerank_score"], reverse=True)
 
         # 5. Cắt top_k nếu cần
         if top_k is not None:

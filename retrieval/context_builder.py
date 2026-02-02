@@ -10,6 +10,32 @@ class ContextBuilder:
         self.max_documents = max_documents
         self.max_context_length = max_context_length
         self.separator = separator
+        
+    """
+    [
+    doc 1: adawdawdawdadawd
+    
+    ___
+    
+    doc 2: adawdawdawdadawd
+    ]
+    
+    current length = 0
+    doc 1: length = 2000
+    current length = 2000 < 3000
+    
+    remaining = 3000 - 2000 = 1000
+    
+    đẩy doc 1 vao context 
+    
+    current length = 2000
+    
+    doc 2: length = 3500
+    
+    remaining = 3000 - 3500 < 0
+    
+    text = doc 2[:3000]
+    """
 
     def build(self, documents: List[RetrievedDocument]) -> str:
         if not documents:
@@ -19,8 +45,8 @@ class ContextBuilder:
         context_parts = []
         current_length = 0
 
-        for doc in documents[: self.max_documents]:
-            text = doc.text.strip()
+        for document in documents[: self.max_documents]:
+            text = document.text.strip()
             if not text:
                 continue
 

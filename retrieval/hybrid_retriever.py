@@ -9,7 +9,6 @@ from core.settings_loader import load_settings
 from core.schema import RetrievedDocument
 from vectorstore.qdrant import get_qdrant_client
 from embedding.embedder import embed_texts
-from embedding.sparse_embedder import SparseEmbedder
 from scoring.bm25 import BM25
 
 settings = load_settings()
@@ -22,7 +21,7 @@ SCORE_THRESHOLD = RETRIEVAL_CONFIG.get("score_threshold", 0.0)
 DENSE_WEIGHT = RETRIEVAL_CONFIG.get("dense_weight", 0.6)
 BM25_WEIGHT = RETRIEVAL_CONFIG.get("bm25_weight", 0.4)
 
-def hybrid_retrieve(query: str, sparse_embedder: SparseEmbedder, bm25: BM25) -> List[RetrievedDocument]:
+def hybrid_retrieve(query: str, bm25: BM25) -> List[RetrievedDocument]:
     if not query or not query.strip():
         logger.warning("Empty query received for hybrid retrieval.")
         return []
@@ -45,10 +44,7 @@ def hybrid_retrieve(query: str, sparse_embedder: SparseEmbedder, bm25: BM25) -> 
         )
 
         points: list[ScoredPoint] = response.points
-        if not points:
-            return []
-
-        rescored_documents = []
+        documents: list[RetrievedDocument] = []
 
         for point in points:
             payload = point.payload or {}
@@ -60,7 +56,7 @@ def hybrid_retrieve(query: str, sparse_embedder: SparseEmbedder, bm25: BM25) -> 
             bm25_score = bm25.score(query, text)
             hybrid_score = (DENSE_WEIGHT * point.score + BM25_WEIGHT * bm25_score)
 
-            rescored_documents.append(
+            documents.append(
                 RetrievedDocument(
                     id=str(point.id),
                     score=hybrid_score,
@@ -73,11 +69,12 @@ def hybrid_retrieve(query: str, sparse_embedder: SparseEmbedder, bm25: BM25) -> 
                 )
             )
 
-        rescored_documents.sort(key=lambda d: d.score, reverse=True)
-        return rescored_documents[:TOP_K]
+        documents.sort(key=lambda d: d.score, reverse=True)
+        return documents[:TOP_K]
+    
     except ResponseHandlingException as e:
-        logger.error(f"Qdrant error: {e}")
+        logger.error(f"Qdrant connection error: {e}")
         raise ConnectionError("Cannot connect to vector database")
     except Exception as e:
-        logger.error("Hybrid retrieval failed", exc_info=True)
+        logger.error(f"Error during retrieval: {e}", exc_info=True)
         return []
