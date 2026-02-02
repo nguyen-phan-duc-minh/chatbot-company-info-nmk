@@ -38,6 +38,7 @@ def hybrid_retrieve(query: str, bm25: BM25) -> List[RetrievedDocument]:
         response = client.query_points(
             collection_name=COLLECTION_NAME,
             query=query_vector,
+            using="dense",  # specify named vector for hybrid search
             limit=TOP_K * 3,  # lấy dư để rerank
             with_payload=True,
             score_threshold=SCORE_THRESHOLD,
