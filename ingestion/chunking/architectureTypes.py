@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 
-from polars import datetime
+from datetime import datetime
 
 from core.settings_loader import load_settings
 from ingestion.helpers.make_metadata import make_metadata

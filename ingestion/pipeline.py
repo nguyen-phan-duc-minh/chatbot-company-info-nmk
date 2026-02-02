@@ -2,7 +2,6 @@ import logging
 
 from ingestion.chunking.architectureTypes import chunk_architecture_types
 from ingestion.chunking.companyInfo import chunk_company_info
-from ingestion.chunking.heroSlides import chunk_hero_slides
 from ingestion.chunking.InteriorStyles import chunk_interior_styles
 from ingestion.chunking.newCategories import chunk_news_categories
 from ingestion.chunking.news import chunk_news
@@ -20,7 +19,6 @@ def run_ingestion_pipeline():
     
     all_chunks.extend(chunk_architecture_types())
     all_chunks.extend(chunk_company_info())
-    all_chunks.extend(chunk_hero_slides())
     all_chunks.extend(chunk_interior_styles())
     all_chunks.extend(chunk_news_categories())
     all_chunks.extend(chunk_news())

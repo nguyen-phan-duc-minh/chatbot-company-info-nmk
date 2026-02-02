@@ -96,23 +96,24 @@ def chunk_projects():
             })
 
         # 3/ Category + Interior style chunk
-        if category.get("name") or interior.get("name"):
-            text_parts = []
-            if category.get("name"):
-                text_parts.append(f"Danh mục: {category['name']}")
-            if interior.get("name"):
-                text_parts.append(f"Phong cách nội thất: {interior['name']}")
+        category = category or {}
+        interior = interior or {}
+        text_parts = []
+        if category.get("name"):
+            text_parts.append(f"Danh mục: {category['name']}")
+        if interior.get("name"):
+            text_parts.append(f"Phong cách nội thất: {interior['name']}")
 
-            chunks.append({
-                "text": f"Dự án {project_name}. " + ". ".join(text_parts),
-                "metadata": make_metadata(
-                    base_metadata,
-                    chunk_type="style",
-                    project_category_name=category.get("name"),
-                    project_interior_name=interior.get("name"),
-                    priority=CHUNK_PRIORITY["style"]
-                )
-            })
+        chunks.append({
+            "text": f"Dự án {project_name}. " + ". ".join(text_parts),
+            "metadata": make_metadata(
+                base_metadata,
+                chunk_type="style",
+                project_category_name=category.get("name"),
+                project_interior_name=interior.get("name"),
+                priority=CHUNK_PRIORITY["style"]
+            )
+        })
 
         # 4/ Location + Investor chunk
         if project_location or project_investor:

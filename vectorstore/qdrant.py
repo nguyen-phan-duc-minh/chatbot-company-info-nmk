@@ -1,5 +1,5 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance
+from qdrant_client.models import VectorParams, Distance, SparseVectorParams, SparseIndexParams
 import logging 
 import os
 
@@ -56,13 +56,20 @@ def ensure_collection(client: QdrantClient): # truyen vao client de tao collecti
         logger.info(f"Collection '{COLLECTION_NAME}' already exists.")
         return
     
-    logger.info(f"Creating collection '{COLLECTION_NAME}'...")
+    logger.info(f"Creating collection '{COLLECTION_NAME}' with hybrid vectors (dense + sparse)...")
     client.recreate_collection(
         collection_name=COLLECTION_NAME,
-        vectors_config=VectorParams(
-            size=VECTOR_SIZE,
-            distance=Distance[DISTANCE.upper()]
-        )
+        vectors_config={
+            "dense": VectorParams(
+                size=VECTOR_SIZE,
+                distance=Distance[DISTANCE.upper()]
+            )
+        },
+        sparse_vectors_config={
+            "sparse": SparseVectorParams(
+                index=SparseIndexParams()
+            )
+        }
     )
-    logger.info(f"Collection '{COLLECTION_NAME}' created with vector size {VECTOR_SIZE} and distance '{DISTANCE}'.")
+    logger.info(f"Collection '{COLLECTION_NAME}' created with dense vector size {VECTOR_SIZE}, distance '{DISTANCE}', and sparse vectors.")
     
