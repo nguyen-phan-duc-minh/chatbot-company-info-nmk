@@ -42,10 +42,6 @@ def initialize_rag_components():
         }
     
     try:
-        logger.info("=" * 60)
-        logger.info("Starting RAG components initialization...")
-        logger.info("=" * 60)
-        
         # Step 1: Load corpus from Qdrant
         logger.info("Step 1: Loading corpus from Qdrant...")
         client: QdrantClient = get_qdrant_client()
@@ -126,15 +122,12 @@ def initialize_rag_components():
         return None
 
 def get_bm25() -> Optional[BM25]:
-    """Get initialized BM25 instance"""
     return _bm25
 
 def get_reranker() -> Optional[CrossEncoderReranker]:
-    """Get initialized Reranker instance"""
     return _reranker
 
 def get_initialization_status() -> dict:
-    """Get status of initialized components"""
     return {
         "initialized": _initialized,
         "sparse_embedder": _sparse_embedder is not None,
